@@ -566,3 +566,152 @@ Before we move to **1.3 Event Loop**, I want you to answer these in your own wor
 
 Don't worry about making the answers perfect. **Answer as if you're sitting in a senior Node.js interview**, and I'll review each answer and point out exactly what to improve.
 
+### My Thoughts-
+So, difference between V8 and Node.js is that V8 is a JavaScript engine, and Node.js is a runtime environment which uses this V8 JavaScript engine and runtime environment for the to run the JavaScript in the backend side where we require, like to access operating system, file system. So yeah, so that is the Node.js. So it is more than the V8 JavaScript engine. And fs.readFile is actually handled by Node.js environment and via libuv and event loop where JavaScript callbacks from this Node.js APIs are run by V8 JavaScript engine. So yeah.
+
+Good answer. 👍 You have the **core architecture correct**. For a senior interview, I'd rate this around **8/10**. There are just a couple of places where we should make the wording more precise.
+
+### Q1 — V8 vs Node.js
+
+You said:
+
+> V8 is a JavaScript engine, and Node.js is a runtime environment which uses this V8 JavaScript engine.
+
+✅ Correct.
+
+And this part is also good:
+
+> Node.js is more than the V8 JavaScript engine because it provides access to the OS, file system, etc.
+
+Exactly.
+
+I'd make your interview answer slightly sharper:
+
+> **"V8 is the JavaScript engine responsible for executing JavaScript. Node.js is a runtime environment built around V8 that provides additional capabilities such as filesystem, networking, timers, and other system-level APIs, along with the asynchronous infrastructure needed to run server-side applications."**
+
+---
+
+### Q2 — `fs.readFile()`
+
+You said:
+
+> `fs.readFile` is handled by the Node.js environment via libuv and Event Loop.
+
+🟢 **Conceptually correct**, but there's an important distinction.
+
+Don't think:
+
+```text
+fs.readFile()
+      ↓
+Event Loop does the file operation
+```
+
+The Event Loop **doesn't actually read the file**.
+
+A better mental model is:
+
+```text
+JavaScript
+    ↓
+V8
+    ↓
+Node.js fs API
+    ↓
+libuv
+    ↓
+OS / libuv thread pool
+    ↓
+File system
+```
+
+Then, once the operation completes:
+
+```text
+File operation completed
+        ↓
+libuv / Node.js
+        ↓
+callback becomes ready
+        ↓
+Event Loop
+        ↓
+V8
+        ↓
+callback executes
+```
+
+We'll go deep into exactly **why filesystem I/O may use the libuv thread pool** when we reach that topic.
+
+---
+
+### Q3 — Who executes the callback?
+
+You said:
+
+> JavaScript callbacks from these Node.js APIs are run by V8.
+
+✅ **Correct.**
+
+This is an important point to remember:
+
+> **The Event Loop decides/coordinates when the JavaScript callback can run; V8 actually executes the JavaScript callback.**
+
+That's a distinction I definitely want you to retain.
+
+---
+
+## One correction to your mental model
+
+You said:
+
+> "via libuv and event loop where JavaScript callbacks ... are run by V8"
+
+I'd separate those responsibilities:
+
+```text
+                 Node.js
+                    │
+        ┌───────────┴───────────┐
+        ↓                       ↓
+       V8                     libuv
+        │                       │
+  Executes JS              Event Loop
+                                │
+                         Coordinates async
+                              work
+                                │
+                         I/O / Thread Pool
+```
+
+So:
+
+**V8 → "Execute this JavaScript."**
+
+**Event Loop → "Is there JavaScript work ready to execute?"**
+
+**libuv → "Coordinate the underlying asynchronous operations."**
+
+That's the foundation we're going to build on.
+
+---
+
+### ⭐ Your current mental model
+
+You should now be comfortable with:
+
+```text
+                Node.js Runtime
+                       │
+          ┌────────────┼────────────┐
+          ↓            ↓            ↓
+         V8          libuv       Node APIs
+          │            │
+    Execute JS     Event Loop
+                   Async I/O
+                   Thread Pool
+```
+
+And the next topic is **1.3 Event Loop** — this is where things get much more interesting.
+
+We'll cover **Call Stack → Event Loop → queues → callbacks → microtasks → timers**, and then later connect `process.nextTick()` and `setImmediate()` to the picture.
