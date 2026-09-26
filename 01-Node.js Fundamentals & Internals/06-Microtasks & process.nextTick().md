@@ -1,5 +1,3 @@
-Let's continue with the next topic.
-
 # 1.3.3 Microtasks & `process.nextTick()`
 
 This is one of the most important parts of the Node.js Event Loop for senior interviews because it explains why **Promises and `process.nextTick()` can execute before timers and I/O callbacks**, even though they aren't normal Event Loop phases.
