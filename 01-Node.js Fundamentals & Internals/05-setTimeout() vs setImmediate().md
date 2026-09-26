@@ -962,3 +962,190 @@ For your notes, I'd write:
 
 We'll later refine the word **"generally"** when we study Node's internal scheduling and queues.
 
+---
+
+Before moving to the next major topic, let's do one short checkpoint.
+
+### Checkpoint
+
+Consider:
+
+```js
+console.log("A");
+
+setTimeout(() => console.log("B"), 0);
+setTimeout(() => console.log("C"), 0);
+
+setImmediate(() => console.log("D"));
+setImmediate(() => console.log("E"));
+
+console.log("F");
+```
+
+**Q1.** Which output is guaranteed?
+
+**Q2.** Which parts can we say are definitely ordered?
+
+**Q3.** Can `B` execute before `C`? Can `D` execute before `E`?
+
+**Q4.** Can `D` execute before `B`?
+
+Answer in your own words, and I'll review it before we move to **Microtasks / `process.nextTick()` / Promises**.
+
+---
+Good attempt. You got the **cross-mechanism uncertainty** right, but Q1–Q3 need correction.
+
+### Review
+
+#### Q1. Which output is guaranteed?
+
+You answered:
+
+> `A, F`
+
+Correct Because both are synchronous:
+
+```js
+console.log("A");
+
+...
+
+console.log("F");
+```
+
+They execute before the Event Loop gets to process the timer/immediate callbacks.
+
+After that, the relative order between the timer group and immediate group isn't guaranteed.
+
+---
+
+#### Q2. Which parts are definitely ordered?
+
+You said:
+
+> console.logs
+
+More specifically:
+
+```text
+A → F
+```
+
+And within each mechanism:
+
+```text
+B → C
+D → E
+```
+
+So possible outputs include:
+
+```text
+A
+F
+B
+C
+D
+E
+```
+
+or:
+
+```text
+A
+F
+D
+E
+B
+C
+```
+
+The important thing is:
+
+```text
+B before C   ✅
+D before E   ✅
+
+B vs D       ❓
+B vs E       ❓
+C vs D       ❓
+C vs E       ❓
+```
+
+---
+
+#### Q3. Can B execute before C?
+
+You answered **Yes**.
+
+❌ For this setup, the intended model is **B before C**, because both are timers and were registered in that order.
+
+Similarly:
+
+```text
+D before E
+```
+
+because both are `setImmediate()` callbacks registered in that order.
+
+---
+
+#### Q4. Can D execute before B?
+
+✅ **Yes.**
+
+That's the interesting part.
+
+```text
+setTimeout()   → Timers
+setImmediate() → Check
+```
+
+When both are scheduled from the main module, their relative ordering isn't guaranteed.
+
+So:
+
+```text
+A
+F
+D
+E
+B
+C
+```
+
+is possible, as is:
+
+```text
+A
+F
+B
+C
+D
+E
+```
+
+### The key pattern to remember
+
+```text
+Synchronous code
+    ↓
+A → F
+
+Same scheduling mechanism
+    ↓
+registration order
+B → C
+D → E
+
+Different mechanisms
+    ↓
+setTimeout vs setImmediate
+    ↓
+ordering can vary
+```
+
+One terminology correction from your answer: **`console.log()` itself isn't what determines the ordering here**. The important distinction is **synchronous execution vs Event Loop callbacks**.
+
+You've now covered the core `setTimeout()` / `setImmediate()` behavior. The next major topic is **Microtasks**, starting with **Promise callbacks and `process.nextTick()`**, where Node.js interview questions get significantly more interesting.
+
