@@ -90,15 +90,6 @@ We’ll cover Node.js in a structured way:
    * Observability
    * Debugging
 
-8. **Senior Interview Preparation**
-
-   * Conceptual questions
-   * "How does it work internally?"
-   * Production scenarios
-   * Debugging scenarios
-   * System-design-related Node.js questions
-   * Follow-up questions interviewers commonly ask
-   * Mock interview rounds
 
 ### Learning style
 
